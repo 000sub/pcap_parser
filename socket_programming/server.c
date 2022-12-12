@@ -11,21 +11,15 @@
 #define PORT_NUM 8201
 #define CLI_PORT 8202
 #define LISTEN_QLEN 3
-#define MSG_KEY (key_t)1097
 
 int main(int argc, char** argv){
     int listenfd, connfd, sockfd;
     int client_idx = 1;
     int fd[2];
-    int qid;
     char buf[1024], tokens[1024];
     struct sockaddr_in cliaddr, servaddr, sktaddr;
     socklen_t clilen;
     pid_t childpid;
-    struct msgbuf {
-        long mtype;
-        char mtext[1024];
-    } mydata;
 
     if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
         printf("socket creating error.\n");

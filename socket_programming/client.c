@@ -10,7 +10,6 @@
 #include <sys/ipc.h> 
 #include <netinet/in.h>
 
-#define MSG_KEY (key_t)1097
 #define PORT_NUM 8202
 
 typedef struct {
@@ -35,7 +34,7 @@ typedef struct {
   uint32_t ttl;
   uint16_t length;
   struct in_addr addr;
-} __attribute__((packed)) dns_record_a_t;
+} __attribute__((packed)) dns_answer_t;
 
 int main(int argc, char** argv){
     dns_header_t header;
@@ -46,11 +45,6 @@ int main(int argc, char** argv){
     char domain_name[50], ip_addr[50];
     char buf[1024], tokens[1024];
     int sockfd, dnsfd, listenfd, connfd;
-    int qid;
-    struct msgbuf {
-        long mtype;
-        char mtext[1024];
-    } mydata;
 
     //create DNS socket
     if ((dnsfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1){
@@ -73,11 +67,12 @@ int main(int argc, char** argv){
     //DNS question set
     question.dnstype = htons(1);
     question.dnsclass = htons(1);
-    question.name = calloc(strlen(domain_name) + 2, sizeof (char));
+    question.name = calloc(strlen(domain_name) + 2, sizeof (char)); // +2 for termination
     memcpy(question.name +1, domain_name, strlen(domain_name));
     uint8_t *prev = (uint8_t *) question.name;
     uint8_t count = 0;
 
+    //replace '.' with field length
     for (size_t i = 0; i < strlen(domain_name); i++)
     {
         if (domain_name[i] == '.')
@@ -128,8 +123,8 @@ int main(int argc, char** argv){
         field_length = start_of_name + total;
     }
 
-    dns_record_a_t *records = (dns_record_a_t *) (field_length + 5);
-    strcpy(ip_addr, inet_ntoa(records[0].addr));
+    dns_answer_t *dns_answer = (dns_answer_t *) (field_length + 5);
+    strcpy(ip_addr, inet_ntoa(dns_answer[0].addr));
     
     //create TCP socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
